@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import _pick from "lodash/pick";
-import _get from "lodash/get";
-import _isEmpty from "lodash/isEmpty";
 
 import { default as DefaultErrorList } from "./ErrorList";
 import {
@@ -149,7 +147,7 @@ export default class Form extends Component {
     return data;
   };
 
-  getFieldNames = (pathSchema, formData) => {
+  getFieldNames = pathSchema => {
     const getAllPaths = (_obj, acc = [], paths = [""]) => {
       Object.keys(_obj).forEach(key => {
         if (typeof _obj[key] === "object") {
@@ -158,10 +156,7 @@ export default class Form extends Component {
         } else if (key === "$name" && _obj[key] !== "") {
           paths.forEach(path => {
             path = path.replace(/^\./, "");
-            const formValue = _get(formData, path);
-            // adds path to fieldNames if it points to a value
-            // or an empty object/array
-            if (typeof formValue !== "object" || _isEmpty(formValue)) {
+            if (!_obj["$hasChildren"]) {
               acc.push(path);
             }
           });
@@ -174,12 +169,17 @@ export default class Form extends Component {
   };
 
   onChange = (formData, newErrorSchema) => {
+    let state = {};
     if (isObject(formData) || Array.isArray(formData)) {
       const newState = this.getStateFromProps(this.props, formData);
       formData = newState.formData;
+
+      state = {
+        formData,
+        pathSchema: newState.pathSchema,
+      };
     }
     const mustValidate = !this.props.noValidate && this.props.liveValidate;
-    let state = { formData };
     let newFormData = formData;
 
     if (this.props.omitExtraData === true && this.props.liveOmit === true) {
@@ -195,10 +195,11 @@ export default class Form extends Component {
         formData
       );
 
-      const fieldNames = this.getFieldNames(pathSchema, formData);
+      const fieldNames = this.getFieldNames(pathSchema);
 
       newFormData = this.getUsedFormData(formData, fieldNames);
       state = {
+        pathSchema,
         formData: newFormData,
       };
     }
@@ -260,7 +261,7 @@ export default class Form extends Component {
         newFormData
       );
 
-      const fieldNames = this.getFieldNames(pathSchema, newFormData);
+      const fieldNames = this.getFieldNames(pathSchema);
 
       newFormData = this.getUsedFormData(newFormData, fieldNames);
     }
