@@ -4,6 +4,7 @@ import mergeAllOf from "json-schema-merge-allof";
 import fill from "core-js/library/fn/array/fill";
 import validateFormData, { isValid } from "./validate";
 import union from "lodash/union";
+import isPlainObject from "lodash/isPlainObject";
 
 export const ADDITIONAL_PROPERTY_FLAG = "__additional_property";
 
@@ -991,15 +992,23 @@ export function toPathSchema(schema, name = "", definitions, formData = {}) {
     const _schema = retrieveSchema(schema, definitions, formData);
     return toPathSchema(_schema, name, definitions, formData);
   }
-  if (schema.hasOwnProperty("items") && Array.isArray(formData)) {
-    formData.forEach((element, i) => {
-      pathSchema[i] = toPathSchema(
+  if (schema.hasOwnProperty("items")) {
+    const retVal = {};
+    const setItemPathSchema = (element, index) => {
+      retVal[`${index}`] = toPathSchema(
         schema.items,
-        `${name}.${i}`,
+        `${name}.${index}`,
         definitions,
         element
       );
-    });
+    };
+    if (Array.isArray(formData) && formData.length > 0) {
+      formData.forEach(setItemPathSchema);
+    } else if (isPlainObject(formData)) {
+      Object.keys(formData).forEach(name => {
+        setItemPathSchema(formData[name], name);
+      });
+    }
   } else if (schema.hasOwnProperty("properties")) {
     for (const property in schema.properties) {
       pathSchema[property] = toPathSchema(
