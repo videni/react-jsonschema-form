@@ -287,13 +287,13 @@ class ArrayField extends Component {
       item: this._getNewFormDataRow(),
     };
     const newKeyedFormData = [...this.state.keyedFormData, newKeyedFormDataRow];
-    this.setState(
-      {
-        keyedFormData: newKeyedFormData,
-        updatedKeyedFormData: true,
-      },
-      () => onChange(keyedToPlainFormData(newKeyedFormData))
-    );
+
+    onChange(keyedToPlainFormData(newKeyedFormData));
+
+    this.setState({
+      keyedFormData: newKeyedFormData,
+      updatedKeyedFormData: true,
+    });
   };
 
   onAddIndexClick = index => {
@@ -308,14 +308,12 @@ class ArrayField extends Component {
       };
       let newKeyedFormData = [...this.state.keyedFormData];
       newKeyedFormData.splice(index, 0, newKeyedFormDataRow);
+      onChange(keyedToPlainFormData(newKeyedFormData));
 
-      this.setState(
-        {
-          keyedFormData: newKeyedFormData,
-          updatedKeyedFormData: true,
-        },
-        () => onChange(keyedToPlainFormData(newKeyedFormData))
-      );
+      this.setState({
+        keyedFormData: newKeyedFormData,
+        updatedKeyedFormData: true,
+      });
     };
   };
 
@@ -341,13 +339,11 @@ class ArrayField extends Component {
         }
       }
       const newKeyedFormData = keyedFormData.filter((_, i) => i !== index);
-      this.setState(
-        {
-          keyedFormData: newKeyedFormData,
-          updatedKeyedFormData: true,
-        },
-        () => onChange(keyedToPlainFormData(newKeyedFormData), newErrorSchema)
-      );
+      onChange(keyedToPlainFormData(newKeyedFormData), newErrorSchema);
+      this.setState({
+        keyedFormData: newKeyedFormData,
+        updatedKeyedFormData: true,
+      });
     };
   };
 
@@ -385,12 +381,11 @@ class ArrayField extends Component {
         return _newKeyedFormData;
       }
       const newKeyedFormData = reOrderArray();
-      this.setState(
-        {
-          keyedFormData: newKeyedFormData,
-        },
-        () => onChange(keyedToPlainFormData(newKeyedFormData), newErrorSchema)
-      );
+      onChange(keyedToPlainFormData(newKeyedFormData), newErrorSchema);
+
+      this.setState({
+        keyedFormData: newKeyedFormData,
+      });
     };
   };
 
