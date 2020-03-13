@@ -168,6 +168,15 @@ export default class Form extends Component {
     return getAllPaths(pathSchema);
   };
 
+  tranformFormData = formData => {
+    const { transformFormData } = this.props;
+    if (typeof transformFormData == "function") {
+      return transformFormData(formData);
+    }
+
+    return formData;
+  };
+
   onChange = (formData, newErrorSchema) => {
     let state = {};
     if (isObject(formData) || Array.isArray(formData)) {
@@ -204,8 +213,10 @@ export default class Form extends Component {
       };
     }
 
+    const transformedFormData = this.tranformFormData(newFormData);
+
     if (mustValidate) {
-      let { errors, errorSchema } = this.validate(newFormData);
+      let { errors, errorSchema } = this.validate(transformedFormData);
       if (this.props.extraErrors) {
         errorSchema = mergeObjects(errorSchema, this.props.extraErrors);
         errors = toErrorList(errorSchema);
@@ -266,8 +277,10 @@ export default class Form extends Component {
       newFormData = this.getUsedFormData(newFormData, fieldNames);
     }
 
+    const transformedFormData = this.tranformFormData(newFormData);
+
     if (!this.props.noValidate) {
-      let { errors, errorSchema } = this.validate(newFormData);
+      let { errors, errorSchema } = this.validate(transformedFormData);
       if (Object.keys(errors).length > 0) {
         if (this.props.extraErrors) {
           errorSchema = mergeObjects(errorSchema, this.props.extraErrors);
@@ -299,7 +312,11 @@ export default class Form extends Component {
       () => {
         if (this.props.onSubmit) {
           this.props.onSubmit(
-            { ...this.state, formData: newFormData, status: "submitted" },
+            {
+              ...this.state,
+              formData: transformedFormData,
+              status: "submitted",
+            },
             event
           );
         }
@@ -443,6 +460,7 @@ if (process.env.NODE_ENV !== "production") {
     liveValidate: PropTypes.bool,
     validate: PropTypes.func,
     transformErrors: PropTypes.func,
+    transformFormData: PropTypes.func,
     formContext: PropTypes.object,
     customFormats: PropTypes.object,
     additionalMetaSchemas: PropTypes.arrayOf(PropTypes.object),
