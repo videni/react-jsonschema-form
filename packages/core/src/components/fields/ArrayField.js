@@ -539,6 +539,7 @@ class ArrayField extends Component {
       onFocus,
       registry = getDefaultRegistry(),
       rawErrors,
+      addViewTransformer,
     } = this.props;
     const items = this.props.formData;
     const { widgets, definitions, formContext } = registry;
@@ -568,6 +569,7 @@ class ArrayField extends Component {
         formContext={formContext}
         autofocus={autofocus}
         rawErrors={rawErrors}
+        addViewTransformer={addViewTransformer}
       />
     );
   }
@@ -585,6 +587,7 @@ class ArrayField extends Component {
       onFocus,
       registry = getDefaultRegistry(),
       rawErrors,
+      addViewTransformer,
     } = this.props;
     const title = schema.title || name;
     const items = this.props.formData;
@@ -607,6 +610,7 @@ class ArrayField extends Component {
         formContext={formContext}
         autofocus={autofocus}
         rawErrors={rawErrors}
+        addViewTransformer={addViewTransformer}
       />
     );
   }
@@ -758,6 +762,7 @@ class ArrayField extends Component {
           idSchema={itemIdSchema}
           required={this.isItemRequired(itemSchema)}
           onChange={this.onChangeForIndex(index)}
+          addViewTransformer={this.addViewTransformer(index)}
           onBlur={onBlur}
           onFocus={onFocus}
           registry={this.props.registry}
@@ -781,6 +786,12 @@ class ArrayField extends Component {
       readonly,
     };
   }
+
+  addViewTransformer = name => {
+    return transformer => {
+      this.props.addViewTransformer({ [name]: transformer });
+    };
+  };
 }
 
 if (process.env.NODE_ENV !== "production") {

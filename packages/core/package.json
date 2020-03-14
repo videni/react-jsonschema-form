@@ -50,7 +50,8 @@
     "prop-types": "^15.7.2",
     "react-app-polyfill": "^1.0.4",
     "react-is": "^16.9.0",
-    "shortid": "^2.2.14"
+    "shortid": "^2.2.14",
+    "set-value": "^3.0.0"
   },
   "devDependencies": {
     "@babel/cli": "^7.4.4",

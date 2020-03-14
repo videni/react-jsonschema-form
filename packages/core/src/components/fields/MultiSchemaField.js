@@ -112,6 +112,7 @@ class AnyOfField extends Component {
       registry,
       uiSchema,
       schema,
+      addViewTransformer,
     } = this.props;
 
     const _SchemaField = registry.fields.SchemaField;
@@ -149,6 +150,7 @@ class AnyOfField extends Component {
             onFocus={onFocus}
             value={selectedOption}
             options={{ enumOptions }}
+            addViewTransformer={addViewTransformer}
             {...uiOptions}
           />
         </div>
@@ -166,6 +168,7 @@ class AnyOfField extends Component {
             onFocus={onFocus}
             registry={registry}
             disabled={disabled}
+            addViewTransformer={addViewTransformer}
           />
         )}
       </div>

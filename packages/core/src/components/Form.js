@@ -1,6 +1,11 @@
 import React, { Component } from "react";
 import PropTypes from "prop-types";
 import _pick from "lodash/pick";
+import _merge from "lodash/merge";
+import _cloneDeep from "lodash/cloneDeep";
+import _has from "lodash/has";
+import _get from "lodash/get";
+import set from "set-value";
 
 import { default as DefaultErrorList } from "./ErrorList";
 import {
@@ -168,13 +173,31 @@ export default class Form extends Component {
     return getAllPaths(pathSchema);
   };
 
-  tranformFormData = formData => {
-    const { transformFormData } = this.props;
-    if (typeof transformFormData == "function") {
-      return transformFormData(formData);
-    }
+  tranformViewData = formData => {
+    const { viewTransformer } = this.state;
+    const newFormData = _cloneDeep(formData);
 
-    return formData;
+    const transform = (transformers, paths = []) => {
+      Object.keys(transformers).forEach(key => {
+        const newPaths = paths.slice();
+        newPaths.push(key);
+        if (typeof transformers[key] === "object") {
+          transform(transformers[key], newPaths);
+        } else if (typeof transformers[key] === "function") {
+          if (_has(newFormData, newPaths)) {
+            const transformer = transformers[key];
+            const orginalFormData = _get(formData, newPaths);
+            const viewData = transformer(orginalFormData);
+
+            set(newFormData, newPaths, viewData);
+          }
+        }
+      });
+    };
+
+    transform(viewTransformer);
+
+    return newFormData;
   };
 
   onChange = (formData, newErrorSchema) => {
@@ -213,10 +236,10 @@ export default class Form extends Component {
       };
     }
 
-    const transformedFormData = this.tranformFormData(newFormData);
+    const viewData = this.tranformViewData(newFormData);
 
     if (mustValidate) {
-      let { errors, errorSchema } = this.validate(transformedFormData);
+      let { errors, errorSchema } = this.validate(viewData);
       if (this.props.extraErrors) {
         errorSchema = mergeObjects(errorSchema, this.props.extraErrors);
         errors = toErrorList(errorSchema);
@@ -236,6 +259,14 @@ export default class Form extends Component {
       state,
       () => this.props.onChange && this.props.onChange(state)
     );
+  };
+
+  addViewTransformer = transformer => {
+    this.setState(state => {
+      const { viewTransformer = {} } = state;
+
+      return { viewTransformer: _merge(viewTransformer, transformer) };
+    });
   };
 
   onBlur = (...args) => {
@@ -277,10 +308,10 @@ export default class Form extends Component {
       newFormData = this.getUsedFormData(newFormData, fieldNames);
     }
 
-    const transformedFormData = this.tranformFormData(newFormData);
+    const viewData = this.tranformViewData(newFormData);
 
     if (!this.props.noValidate) {
-      let { errors, errorSchema } = this.validate(transformedFormData);
+      let { errors, errorSchema } = this.validate(viewData);
       if (Object.keys(errors).length > 0) {
         if (this.props.extraErrors) {
           errorSchema = mergeObjects(errorSchema, this.props.extraErrors);
@@ -314,7 +345,7 @@ export default class Form extends Component {
           this.props.onSubmit(
             {
               ...this.state,
-              formData: transformedFormData,
+              formData: viewData,
               status: "submitted",
             },
             event
@@ -408,6 +439,7 @@ export default class Form extends Component {
           formContext={formContext}
           formData={formData}
           onChange={this.onChange}
+          addViewTransformer={this.addViewTransformer}
           onBlur={this.onBlur}
           onFocus={this.onFocus}
           registry={registry}
@@ -460,7 +492,6 @@ if (process.env.NODE_ENV !== "production") {
     liveValidate: PropTypes.bool,
     validate: PropTypes.func,
     transformErrors: PropTypes.func,
-    transformFormData: PropTypes.func,
     formContext: PropTypes.object,
     customFormats: PropTypes.object,
     additionalMetaSchemas: PropTypes.arrayOf(PropTypes.object),

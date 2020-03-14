@@ -105,6 +105,12 @@ class ObjectField extends Component {
     };
   };
 
+  addViewTransformer = name => {
+    return transformer => {
+      this.props.addViewTransformer({ [name]: transformer });
+    };
+  };
+
   onDropPropertyClick = key => {
     return event => {
       event.preventDefault();
@@ -275,6 +281,7 @@ class ObjectField extends Component {
                 name,
                 addedByAdditionalProperties
               )}
+              addViewTransformer={this.addViewTransformer(name)}
               onBlur={onBlur}
               onFocus={onFocus}
               registry={registry}
