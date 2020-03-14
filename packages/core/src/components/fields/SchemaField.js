@@ -236,6 +236,7 @@ function SchemaFieldRender(props) {
     required,
     registry = getDefaultRegistry(),
     wasPropertyKeyModified = false,
+    addViewTransformer,
   } = props;
   const { rootSchema, fields, formContext } = registry;
   const FieldTemplate =
@@ -379,6 +380,7 @@ function SchemaFieldRender(props) {
           registry={registry}
           schema={schema}
           uiSchema={uiSchema}
+          addViewTransformer={addViewTransformer}
         />
       )}
 
@@ -397,6 +399,7 @@ function SchemaFieldRender(props) {
           registry={registry}
           schema={schema}
           uiSchema={uiSchema}
+          addViewTransformer={addViewTransformer}
         />
       )}
     </FieldTemplate>
