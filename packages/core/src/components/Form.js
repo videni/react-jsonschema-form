@@ -34,50 +34,69 @@ export default class Form extends Component {
 
   constructor(props) {
     super(props);
-    this.state = this.getStateFromProps(props, props.formData);
-    if (
-      this.props.onChange &&
-      !deepEquals(this.state.formData, this.props.formData)
-    ) {
-      this.props.onChange(this.state);
-    }
+
+    this.state = {
+      ...Form.getStateFromProps(props, props.formData),
+      errors: [],
+      errorSchema: {},
+      edit: typeof props.formData !== "undefined"
+    };
+   
     this.formElement = null;
   }
 
-  UNSAFE_componentWillReceiveProps(nextProps) {
-    const nextState = this.getStateFromProps(nextProps, nextProps.formData);
-    if (
-      !deepEquals(nextState.formData, nextProps.formData) &&
-      !deepEquals(nextState.formData, this.state.formData) &&
-      this.props.onChange
-    ) {
-      this.props.onChange(nextState);
-    }
-    this.setState(nextState);
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return Form.getStateFromProps(nextProps, prevState.formData);
   }
 
-  getStateFromProps(props, inputFormData) {
-    const state = this.state || {};
-    const schema = "schema" in props ? props.schema : this.props.schema;
-    const uiSchema = "uiSchema" in props ? props.uiSchema : this.props.uiSchema;
-    const edit = typeof inputFormData !== "undefined";
-    const liveValidate = props.liveValidate || this.props.liveValidate;
-    const mustValidate = edit && !props.noValidate && liveValidate;
+  synchroize() {
+    if (
+      !deepEquals(this.state.formData, this.props.formData) &&
+      this.props.onChange
+    ) {
+      const edit = typeof this.props.formData !== "undefined";
+      const liveValidate = this.props.liveValidate || this.props.liveValidate;
+      const mustValidate = edit && !this.props.noValidate && liveValidate;
+  
+      const viewData = this.tranformViewData(this.state.formData);
+
+      let { errors, errorSchema } = mustValidate
+      ? this.validate(viewData, this.props.schema, this.props.additionalMetaSchemas, this.props.customFormats)
+      : {
+          errors: this.state.errors || [],
+          errorSchema: this.state.errorSchema || {},
+        };
+      if (this.props.extraErrors) {
+        errorSchema = mergeObjects(errorSchema, this.props.extraErrors);
+        errors = toErrorList(errorSchema);
+      }
+  
+      this.setState({
+        edit,
+        errors,
+        errorSchema,
+      });
+      
+      this.props.onChange(this.state);
+    }
+  }
+
+  componentDidMount() {
+    this.synchroize();
+  }
+
+  componentDidUpdate() {
+    this.synchroize();
+  }
+
+  static getStateFromProps(props, inputFormData) {
+    const schema = props.schema;
+    const uiSchema = props.uiSchema;
     const rootSchema = schema;
     const formData = getDefaultFormState(schema, inputFormData, rootSchema);
     const retrievedSchema = retrieveSchema(schema, rootSchema, formData);
-    const customFormats = props.customFormats;
     const additionalMetaSchemas = props.additionalMetaSchemas;
-    let { errors, errorSchema } = mustValidate
-      ? this.validate(formData, schema, additionalMetaSchemas, customFormats)
-      : {
-          errors: state.errors || [],
-          errorSchema: state.errorSchema || {},
-        };
-    if (props.extraErrors) {
-      errorSchema = mergeObjects(errorSchema, props.extraErrors);
-      errors = toErrorList(errorSchema);
-    }
+   
     const idSchema = toIdSchema(
       retrievedSchema,
       uiSchema["ui:rootFieldId"],
@@ -85,14 +104,12 @@ export default class Form extends Component {
       formData,
       props.idPrefix
     );
+
     return {
       schema,
       uiSchema,
       idSchema,
       formData,
-      edit,
-      errors,
-      errorSchema,
       additionalMetaSchemas,
     };
   }
@@ -203,7 +220,7 @@ export default class Form extends Component {
   onChange = (formData, newErrorSchema) => {
     let state = {};
     if (isObject(formData) || Array.isArray(formData)) {
-      const newState = this.getStateFromProps(this.props, formData);
+      const newState = Form.getStateFromProps(this.props, formData);
       formData = newState.formData;
 
       state = {
@@ -485,7 +502,6 @@ if (process.env.NODE_ENV !== "production") {
     target: PropTypes.string,
     action: PropTypes.string,
     autocomplete: PropTypes.string,
-    autoComplete: PropTypes.string,
     enctype: PropTypes.string,
     acceptcharset: PropTypes.string,
     noValidate: PropTypes.bool,
